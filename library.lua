@@ -1,28 +1,25 @@
---[[ 
-    BitcodeLibrary v3.0 - Edição Adaptativa
-    Especialista: Bitcode Assistente
-    Novos Recursos: 75% Screen Scaling & Dropdown System
-]]
-
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
+-- [[ BitcodeLibrary v3.5 - Optimized UI ]]
+-- Especialista: bitcode assistente
+-- Ajustes: Largura Fixa (350px) + Altura Adaptável (75%) + Correção de Renderização
 
 local Library = {}
 Library.__index = Library
 
 Library.Colors = {
     NEON_ORANGE = Color3.fromRGB(255, 100, 0),
-    BACKGROUND_BLACK = Color3.fromRGB(10, 10, 10),
+    BACKGROUND_BLACK = Color3.fromRGB(12, 12, 12),
     ACCENT_WHITE = Color3.fromRGB(255, 255, 255),
-    DARK_GREY = Color3.fromRGB(20, 20, 20),
-    HIGHLIGHT = Color3.fromRGB(35, 35, 35)
+    DARK_GREY = Color3.fromRGB(25, 25, 25),
+    HIGHLIGHT = Color3.fromRGB(40, 40, 40)
 }
 
--- ===== UTILITÁRIOS =====
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
 local function createCorner(obj, r)
     local c = Instance.new("UICorner", obj)
-    c.CornerRadius = UDim.new(0, r or 6)
+    c.CornerRadius = UDim.new(0, r or 8)
 end
 
 local function makeDraggable(frame)
@@ -37,10 +34,7 @@ local function makeDraggable(frame)
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
@@ -50,7 +44,6 @@ local function makeDraggable(frame)
     end)
 end
 
--- ===== INICIALIZAÇÃO =====
 function Library:Init()
     local old = CoreGui:FindFirstChild("BitcodeLibrary")
     if old then old:Destroy() end
@@ -60,41 +53,28 @@ function Library:Init()
     screen.ResetOnSpawn = false
     self.ScreenGui = screen
 
-    -- CONFIGURAÇÃO ADAPTÁVEL (75% da Tela)
+    -- MAIN FRAME: Largura Fixa (350), Altura 75%
     local main = Instance.new("Frame", screen)
-    main.Name = "MainFrame"
     main.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
     main.AnchorPoint = Vector2.new(0.5, 0.5)
     main.Position = UDim2.new(0.5, 0, 0.5, 0)
-    -- Define 75% de largura e altura usando Scale
-    main.Size = UDim2.new(0.75, 0, 0.75, 0) 
+    main.Size = UDim2.new(0, 350, 0.75, 0) 
     main.ClipsDescendants = true
     main.Visible = false
-    createCorner(main, 12)
+    createCorner(main, 10)
     self.MainFrame = main
 
     local stroke = Instance.new("UIStroke", main)
     stroke.Color = Library.Colors.NEON_ORANGE
-    stroke.Thickness = 2
+    stroke.Thickness = 1.8
 
     makeDraggable(main)
 
-    -- Toggle Button (W)
-    local toggleBtn = Instance.new("TextButton", screen)
-    toggleBtn.Size = UDim2.new(0, 50, 0, 50)
-    toggleBtn.Position = UDim2.new(0, 20, 0, 20)
-    toggleBtn.Text = "W"
-    toggleBtn.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
-    toggleBtn.TextColor3 = Library.Colors.NEON_ORANGE
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.TextSize = 14
-    createCorner(toggleBtn, 25)
-    Instance.new("UIStroke", toggleBtn).Color = Library.Colors.NEON_ORANGE
-
-    -- Sidebar
+    -- Sidebar (100px largura)
     local sidebar = Instance.new("Frame", main)
-    sidebar.Size = UDim2.new(0.25, 0, 1, 0) -- 25% da largura do menu
-    sidebar.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+    sidebar.Size = UDim2.new(0, 100, 1, 0)
+    sidebar.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+    sidebar.BorderSizePixel = 0
 
     local tabList = Instance.new("ScrollingFrame", sidebar)
     tabList.Size = UDim2.new(1, -10, 1, -20)
@@ -102,142 +82,170 @@ function Library:Init()
     tabList.BackgroundTransparency = 1
     tabList.ScrollBarThickness = 0
     tabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    Instance.new("UIListLayout", tabList).Padding = UDim.new(0, 5)
+    local layout = Instance.new("UIListLayout", tabList)
+    layout.Padding = UDim.new(0, 6)
 
     -- Container de Conteúdo
     local container = Instance.new("Frame", main)
-    container.Position = UDim2.new(0.26, 0, 0, 10)
-    container.Size = UDim2.new(0.72, 0, 1, -20)
+    container.Position = UDim2.new(0, 110, 0, 10)
+    container.Size = UDim2.new(1, -120, 1, -20)
     container.BackgroundTransparency = 1
     self.Container = container
     self.TabList = tabList
 
-    -- Lógica Toggle
+    -- Toggle Button (W)
+    local tBtn = Instance.new("TextButton", screen)
+    tBtn.Size = UDim2.new(0, 45, 0, 45)
+    tBtn.Position = UDim2.new(0, 15, 0.5, 0)
+    tBtn.Text = "W"
+    tBtn.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    tBtn.TextColor3 = Library.Colors.NEON_ORANGE
+    tBtn.Font = Enum.Font.GothamBold
+    createCorner(tBtn, 22)
+    Instance.new("UIStroke", tBtn).Color = Library.Colors.NEON_ORANGE
+
     local open = false
-    toggleBtn.MouseButton1Click:Connect(function()
+    tBtn.MouseButton1Click:Connect(function()
         open = not open
         main.Visible = true
-        local targetSize = open and UDim2.new(0.75, 0, 0.75, 0) or UDim2.new(0, 0, 0, 0)
-        TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Size = targetSize}):Play()
-        if not open then task.wait(0.4) main.Visible = false end
+        local targetSize = open and UDim2.new(0, 350, 0.75, 0) or UDim2.new(0, 0, 0, 0)
+        TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = targetSize}):Play()
+        if not open then task.wait(0.4) if not open then main.Visible = false end end
     end)
+    
+    return self
 end
 
--- ===== SISTEMA DE TABS =====
 function Library:CreateTab(name)
     local btn = Instance.new("TextButton", self.TabList)
-    btn.Size = UDim2.new(1, 0, 0, 35)
+    btn.Size = UDim2.new(1, 0, 0, 30)
     btn.Text = name
     btn.BackgroundColor3 = Library.Colors.DARK_GREY
     btn.TextColor3 = Library.Colors.ACCENT_WHITE
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    createCorner(btn, 6)
+    btn.TextSize = 10
+    createCorner(btn, 4)
 
     local content = Instance.new("ScrollingFrame", self.Container)
     content.Size = UDim2.new(1, 0, 1, 0)
     content.BackgroundTransparency = 1
     content.Visible = false
     content.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    content.ScrollBarThickness = 3
-    Instance.new("UIListLayout", content).Padding = UDim.new(0, 10)
+    content.ScrollBarThickness = 2
+    content.ScrollBarImageColor3 = Library.Colors.NEON_ORANGE
+    
+    local contentLayout = Instance.new("UIListLayout", content)
+    contentLayout.Padding = UDim.new(0, 8)
+    contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
     btn.MouseButton1Click:Connect(function()
-        for _, v in pairs(self.Container:GetChildren()) do v.Visible = false end
+        for _, v in pairs(self.Container:GetChildren()) do 
+            if v:IsA("ScrollingFrame") then v.Visible = false end 
+        end
         content.Visible = true
     end)
 
-    if not self._hasTab then self._hasTab = true content.Visible = true end
+    if not self._hasTab then 
+        self._hasTab = true 
+        content.Visible = true 
+    end
 
     local tab = {}
 
-    -- BOTÃO
     function tab:CreateButton(text, cb)
         local b = Instance.new("TextButton", content)
-        b.Size = UDim2.new(0.95, 0, 0, 35)
+        b.Size = UDim2.new(0.95, 0, 0, 32)
         b.Text = text
         b.BackgroundColor3 = Library.Colors.HIGHLIGHT
         b.TextColor3 = Library.Colors.ACCENT_WHITE
         b.Font = Enum.Font.Gotham
-        createCorner(b, 6)
+        b.TextSize = 12
+        createCorner(b, 5)
         b.MouseButton1Click:Connect(cb)
     end
 
-    -- DROPDOWN (Novo)
-    function tab:CreateDropdown(text, list, cb)
-        local expanded = false
-        local dropFrame = Instance.new("Frame", content)
-        dropFrame.Size = UDim2.new(0.95, 0, 0, 40)
-        dropFrame.BackgroundColor3 = Library.Colors.DARK_GREY
-        dropFrame.ClipsDescendants = true
-        createCorner(dropFrame, 6)
-
-        local btn = Instance.new("TextButton", dropFrame)
-        btn.Size = UDim2.new(1, 0, 0, 40)
-        btn.Text = text .. "  ▼"
-        btn.BackgroundTransparency = 1
-        btn.TextColor3 = Library.Colors.ACCENT_WHITE
-        btn.Font = Enum.Font.GothamBold
-
-        local itemsContainer = Instance.new("Frame", dropFrame)
-        itemsContainer.Position = UDim2.new(0, 0, 0, 40)
-        itemsContainer.Size = UDim2.new(1, 0, 0, #list * 30)
-        itemsContainer.BackgroundTransparency = 1
-        Instance.new("UIListLayout", itemsContainer)
-
-        for _, val in pairs(list) do
-            local item = Instance.new("TextButton", itemsContainer)
-            item.Size = UDim2.new(1, 0, 0, 30)
-            item.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            item.Text = tostring(val)
-            item.TextColor3 = Color3.fromRGB(200, 200, 200)
-            item.Font = Enum.Font.Gotham
-            item.BorderSizePixel = 0
-            
-            item.MouseButton1Click:Connect(function()
-                btn.Text = text .. ": " .. tostring(val)
-                expanded = false
-                TweenService:Create(dropFrame, TweenInfo.new(0.3), {Size = UDim2.new(0.95, 0, 0, 40)}):Play()
-                cb(val)
-            end)
-        end
-
-        btn.MouseButton1Click:Connect(function()
-            expanded = not expanded
-            local targetHeight = expanded and (40 + (#list * 30)) or 40
-            TweenService:Create(dropFrame, TweenInfo.new(0.3), {Size = UDim2.new(0.95, 0, 0, targetHeight)}):Play()
-        end)
-    end
-
-    -- TOGGLE & SLIDER seguem a lógica anterior (adaptados para 0.95 Scale)
     function tab:CreateToggle(text, cb)
         local state = false
         local f = Instance.new("Frame", content)
-        f.Size = UDim2.new(0.95,0,0,40)
+        f.Size = UDim2.new(0.95, 0, 0, 38)
         f.BackgroundColor3 = Library.Colors.DARK_GREY
-        createCorner(f,6)
+        createCorner(f, 5)
         
         local l = Instance.new("TextLabel", f)
-        l.Size = UDim2.new(0.7,0,1,0)
-        l.Position = UDim2.new(0,10,0,0)
+        l.Size = UDim2.new(0.7, 0, 1, 0)
+        l.Position = UDim2.new(0, 10, 0, 0)
         l.BackgroundTransparency = 1
         l.Text = text
         l.TextColor3 = Library.Colors.ACCENT_WHITE
         l.Font = Enum.Font.Gotham
+        l.TextSize = 12
         l.TextXAlignment = Enum.TextXAlignment.Left
 
         local box = Instance.new("Frame", f)
-        box.Size = UDim2.new(0,35,0,18)
-        box.Position = UDim2.new(0.85,0,0.5,-9)
-        box.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        createCorner(box,10)
+        box.Size = UDim2.new(0, 32, 0, 16)
+        box.Position = UDim2.new(1, -42, 0.5, -8)
+        box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        createCorner(box, 8)
+
+        local dot = Instance.new("Frame", box)
+        dot.Size = UDim2.new(0, 12, 0, 12)
+        dot.Position = UDim2.new(0, 2, 0.5, -6)
+        dot.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        createCorner(dot, 6)
 
         f.InputBegan:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                 state = not state
-                TweenService:Create(box, TweenInfo.new(0.2), {BackgroundColor3 = state and Library.Colors.NEON_ORANGE or Color3.fromRGB(40,40,40)}):Play()
+                TweenService:Create(box, TweenInfo.new(0.2), {BackgroundColor3 = state and Library.Colors.NEON_ORANGE or Color3.fromRGB(40, 40, 40)}):Play()
+                TweenService:Create(dot, TweenInfo.new(0.2), {Position = state and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)}):Play()
                 cb(state)
             end
+        end)
+    end
+
+    function tab:CreateDropdown(text, list, cb)
+        local expanded = false
+        local dropFrame = Instance.new("Frame", content)
+        dropFrame.Size = UDim2.new(0.95, 0, 0, 35)
+        dropFrame.BackgroundColor3 = Library.Colors.DARK_GREY
+        dropFrame.ClipsDescendants = true
+        createCorner(dropFrame, 5)
+
+        local dBtn = Instance.new("TextButton", dropFrame)
+        dBtn.Size = UDim2.new(1, 0, 0, 35)
+        dBtn.Text = text .. "  ▼"
+        dBtn.BackgroundTransparency = 1
+        dBtn.TextColor3 = Library.Colors.ACCENT_WHITE
+        dBtn.Font = Enum.Font.GothamBold
+        dBtn.TextSize = 12
+
+        local items = Instance.new("Frame", dropFrame)
+        items.Position = UDim2.new(0, 0, 0, 35)
+        items.Size = UDim2.new(1, 0, 0, #list * 30)
+        items.BackgroundTransparency = 1
+        Instance.new("UIListLayout", items)
+
+        for _, v in pairs(list) do
+            local item = Instance.new("TextButton", items)
+            item.Size = UDim2.new(1, 0, 0, 30)
+            item.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            item.Text = v
+            item.TextColor3 = Color3.fromRGB(200, 200, 200)
+            item.Font = Enum.Font.Gotham
+            item.TextSize = 11
+            item.BorderSizePixel = 0
+            item.MouseButton1Click:Connect(function()
+                dBtn.Text = text .. ": " .. v
+                expanded = false
+                TweenService:Create(dropFrame, TweenInfo.new(0.3), {Size = UDim2.new(0.95, 0, 0, 35)}):Play()
+                cb(v)
+            end)
+        end
+
+        dBtn.MouseButton1Click:Connect(function()
+            expanded = not expanded
+            local target = expanded and (35 + (#list * 30)) or 35
+            TweenService:Create(dropFrame, TweenInfo.new(0.3), {Size = UDim2.new(0.95, 0, 0, target)}):Play()
         end)
     end
 
