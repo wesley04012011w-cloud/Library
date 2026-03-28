@@ -1,4 +1,4 @@
--- Bitcode Library V3 (Pro)
+-- Bitcode Library V3.1 (FIXED)
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -13,33 +13,33 @@ Library.Colors = {
     Text = Color3.fromRGB(255,255,255)
 }
 
--- ===== UTILS =====
+-- Utils
 local function corner(obj,r)
     local c = Instance.new("UICorner",obj)
     c.CornerRadius = UDim.new(0,r or 6)
 end
 
--- ===== INIT =====
+-- INIT
 function Library:Init()
-    local old = game.CoreGui:FindFirstChild("BitcodeLibrary")
-    if old then old:Destroy() end
+    if game.CoreGui:FindFirstChild("BitcodeLibrary") then
+        game.CoreGui.BitcodeLibrary:Destroy()
+    end
 
     local sg = Instance.new("ScreenGui", game.CoreGui)
     sg.Name = "BitcodeLibrary"
-
     self.Gui = sg
 
     local main = Instance.new("Frame", sg)
     main.Size = UDim2.new(0,0,0,0)
     main.Position = UDim2.new(0.5,-200,0.5,-150)
     main.BackgroundColor3 = self.Colors.Bg
+    main.ClipsDescendants = true
     corner(main,10)
     self.Main = main
 
-    local stroke = Instance.new("UIStroke", main)
-    stroke.Color = self.Colors.Main
+    Instance.new("UIStroke", main).Color = self.Colors.Main
 
-    -- toggle button
+    -- Toggle
     local btn = Instance.new("TextButton", sg)
     btn.Size = UDim2.new(0,50,0,50)
     btn.Position = UDim2.new(0,15,0,120)
@@ -58,20 +58,23 @@ function Library:Init()
         }):Play()
     end)
 
-    -- tabs
+    -- Tabs sidebar
     self.Tabs = Instance.new("Frame", main)
     self.Tabs.Size = UDim2.new(0,120,1,0)
 
+    local tabLayout = Instance.new("UIListLayout", self.Tabs)
+    tabLayout.Padding = UDim.new(0,5)
+
+    -- Container
     self.Container = Instance.new("Frame", main)
     self.Container.Position = UDim2.new(0,130,0,0)
     self.Container.Size = UDim2.new(1,-130,1,0)
 
     self._first = true
 
-    -- ===== SETTINGS TAB AUTO =====
+    -- ===== SETTINGS =====
     local settings = self:CreateTab("Settings")
 
-    -- Speed built-in
     settings:CreateSlider("Speed",16,200,16,function(v)
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("Humanoid") then
@@ -79,10 +82,7 @@ function Library:Init()
         end
     end)
 
-    -- ESP built-in
-    local esp = false
     settings:CreateToggle("ESP Name", function(state)
-        esp = state
         for _,p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
                 local old = p.Character:FindFirstChild("ESP")
@@ -107,7 +107,7 @@ function Library:Init()
     end)
 end
 
--- ===== TAB =====
+-- TAB
 function Library:CreateTab(name)
     local btn = Instance.new("TextButton", self.Tabs)
     btn.Size = UDim2.new(1,0,0,30)
@@ -116,16 +116,22 @@ function Library:CreateTab(name)
     btn.TextColor3 = self.Colors.Text
     corner(btn,6)
 
-    local page = Instance.new("Frame", self.Container)
+    local page = Instance.new("ScrollingFrame", self.Container)
     page.Size = UDim2.new(1,0,1,0)
+    page.BackgroundTransparency = 1
     page.Visible = false
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.ScrollBarThickness = 3
 
     local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim.new(0,5)
+    layout.Padding = UDim.new(0,6)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
     btn.MouseButton1Click:Connect(function()
         for _,v in pairs(self.Container:GetChildren()) do
-            if v:IsA("Frame") then v.Visible = false end
+            if v:IsA("ScrollingFrame") then
+                v.Visible = false
+            end
         end
         page.Visible = true
     end)
@@ -139,7 +145,7 @@ function Library:CreateTab(name)
 
     function tab:CreateButton(text,cb)
         local b = Instance.new("TextButton", page)
-        b.Size = UDim2.new(1,0,0,30)
+        b.Size = UDim2.new(0.95,0,0,30)
         b.Text = text
         b.BackgroundColor3 = Color3.fromRGB(25,25,25)
         b.TextColor3 = Library.Colors.Text
@@ -150,23 +156,23 @@ function Library:CreateTab(name)
     function tab:CreateToggle(text,cb)
         local state = false
 
-        local f = Instance.new("TextButton", page)
-        f.Size = UDim2.new(1,0,0,30)
-        f.Text = text
-        f.BackgroundColor3 = Color3.fromRGB(20,20,20)
-        f.TextColor3 = Library.Colors.Text
-        corner(f,6)
+        local b = Instance.new("TextButton", page)
+        b.Size = UDim2.new(0.95,0,0,30)
+        b.Text = text
+        b.BackgroundColor3 = Color3.fromRGB(20,20,20)
+        b.TextColor3 = Library.Colors.Text
+        corner(b,6)
 
-        f.MouseButton1Click:Connect(function()
+        b.MouseButton1Click:Connect(function()
             state = not state
-            f.BackgroundColor3 = state and Library.Colors.Main or Color3.fromRGB(20,20,20)
+            b.BackgroundColor3 = state and Library.Colors.Main or Color3.fromRGB(20,20,20)
             cb(state)
         end)
     end
 
     function tab:CreateSlider(text,min,max,def,cb)
         local f = Instance.new("Frame", page)
-        f.Size = UDim2.new(1,0,0,40)
+        f.Size = UDim2.new(0.95,0,0,40)
         f.BackgroundColor3 = Color3.fromRGB(20,20,20)
         corner(f,6)
 
@@ -177,8 +183,8 @@ function Library:CreateTab(name)
         l.TextColor3 = Library.Colors.Text
 
         local bar = Instance.new("Frame", f)
-        bar.Position = UDim2.new(0,5,0,25)
-        bar.Size = UDim2.new(1,-10,0,5)
+        bar.Position = UDim2.new(0.05,0,0.65,0)
+        bar.Size = UDim2.new(0.9,0,0,5)
         bar.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
         local fill = Instance.new("Frame", bar)
@@ -203,19 +209,20 @@ function Library:CreateTab(name)
             if dragging then
                 local pos = (i.Position.X - bar.AbsolutePosition.X)/bar.AbsoluteSize.X
                 pos = math.clamp(pos,0,1)
+
                 local val = math.floor(min+(max-min)*pos)
 
                 fill.Size = UDim2.new(pos,0,1,0)
                 l.Text = text..": "..val
+
                 cb(val)
             end
         end)
     end
 
-    -- ===== DROPDOWN =====
     function tab:CreateDropdown(text, options, cb)
         local main = Instance.new("Frame", page)
-        main.Size = UDim2.new(1,0,0,30)
+        main.Size = UDim2.new(0.95,0,0,30)
         main.BackgroundColor3 = Color3.fromRGB(20,20,20)
         corner(main,6)
 
@@ -226,11 +233,11 @@ function Library:CreateTab(name)
         btn.TextColor3 = Library.Colors.Text
 
         local list = Instance.new("Frame", main)
-        list.Size = UDim2.new(1,0,0,#options*25)
         list.Position = UDim2.new(0,0,1,0)
+        list.Size = UDim2.new(1,0,0,#options*25)
         list.Visible = false
 
-        for i,v in pairs(options) do
+        for i,v in ipairs(options) do
             local opt = Instance.new("TextButton", list)
             opt.Size = UDim2.new(1,0,0,25)
             opt.Position = UDim2.new(0,0,0,(i-1)*25)
@@ -252,10 +259,10 @@ function Library:CreateTab(name)
     return tab
 end
 
--- ===== NOTIFICATION =====
+-- NOTIFY
 function Library:Notify(text)
     local n = Instance.new("TextLabel", self.Gui)
-    n.Size = UDim2.new(0,200,0,50)
+    n.Size = UDim2.new(0,200,0,40)
     n.Position = UDim2.new(1,-210,1,-60)
     n.BackgroundColor3 = self.Colors.Bg
     n.TextColor3 = self.Colors.Main
@@ -266,9 +273,9 @@ function Library:Notify(text)
         Position = UDim2.new(1,-210,1,-100)
     }):Play()
 
-    task.wait(2)
-
-    n:Destroy()
+    task.delay(2,function()
+        n:Destroy()
+    end)
 end
 
 return Library
