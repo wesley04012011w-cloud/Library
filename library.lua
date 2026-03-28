@@ -1,6 +1,6 @@
--- [[ BitcodeLibrary v3.5 - Optimized UI ]]
+-- [[ BitcodeLibrary v4.0 - Estável & Completa ]]
 -- Especialista: bitcode assistente
--- Ajustes: Largura Fixa (350px) + Altura Adaptável (75%) + Correção de Renderização
+-- Inclui: Buttons, Toggles, Dropdowns, Sliders e Responsividade
 
 local Library = {}
 Library.__index = Library
@@ -53,7 +53,6 @@ function Library:Init()
     screen.ResetOnSpawn = false
     self.ScreenGui = screen
 
-    -- MAIN FRAME: Largura Fixa (350), Altura 75%
     local main = Instance.new("Frame", screen)
     main.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
     main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -70,7 +69,6 @@ function Library:Init()
 
     makeDraggable(main)
 
-    -- Sidebar (100px largura)
     local sidebar = Instance.new("Frame", main)
     sidebar.Size = UDim2.new(0, 100, 1, 0)
     sidebar.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
@@ -85,7 +83,6 @@ function Library:Init()
     local layout = Instance.new("UIListLayout", tabList)
     layout.Padding = UDim.new(0, 6)
 
-    -- Container de Conteúdo
     local container = Instance.new("Frame", main)
     container.Position = UDim2.new(0, 110, 0, 10)
     container.Size = UDim2.new(1, -120, 1, -20)
@@ -93,7 +90,6 @@ function Library:Init()
     self.Container = container
     self.TabList = tabList
 
-    -- Toggle Button (W)
     local tBtn = Instance.new("TextButton", screen)
     tBtn.Size = UDim2.new(0, 45, 0, 45)
     tBtn.Position = UDim2.new(0, 15, 0.5, 0)
@@ -133,7 +129,6 @@ function Library:CreateTab(name)
     content.AutomaticCanvasSize = Enum.AutomaticSize.Y
     content.ScrollBarThickness = 2
     content.ScrollBarImageColor3 = Library.Colors.NEON_ORANGE
-    
     local contentLayout = Instance.new("UIListLayout", content)
     contentLayout.Padding = UDim.new(0, 8)
     contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -145,13 +140,11 @@ function Library:CreateTab(name)
         content.Visible = true
     end)
 
-    if not self._hasTab then 
-        self._hasTab = true 
-        content.Visible = true 
-    end
+    if not self._hasTab then self._hasTab = true content.Visible = true end
 
     local tab = {}
 
+    -- FUNÇÃO BOTÃO
     function tab:CreateButton(text, cb)
         local b = Instance.new("TextButton", content)
         b.Size = UDim2.new(0.95, 0, 0, 32)
@@ -164,6 +157,7 @@ function Library:CreateTab(name)
         b.MouseButton1Click:Connect(cb)
     end
 
+    -- FUNÇÃO TOGGLE
     function tab:CreateToggle(text, cb)
         local state = false
         local f = Instance.new("Frame", content)
@@ -203,6 +197,62 @@ function Library:CreateTab(name)
         end)
     end
 
+    -- FUNÇÃO SLIDER (Corrigida e Integrada)
+    function tab:CreateSlider(text, min, max, default, cb)
+        local sliderFrame = Instance.new("Frame", content)
+        sliderFrame.Size = UDim2.new(0.95, 0, 0, 45)
+        sliderFrame.BackgroundColor3 = Library.Colors.DARK_GREY
+        createCorner(sliderFrame, 5)
+
+        local title = Instance.new("TextLabel", sliderFrame)
+        title.Size = UDim2.new(1, 0, 0, 20)
+        title.Position = UDim2.new(0, 10, 0, 5)
+        title.BackgroundTransparency = 1
+        title.Text = text .. ": " .. default
+        title.TextColor3 = Library.Colors.ACCENT_WHITE
+        title.Font = Enum.Font.Gotham
+        title.TextSize = 11
+        title.TextXAlignment = Enum.TextXAlignment.Left
+
+        local barBg = Instance.new("Frame", sliderFrame)
+        barBg.Size = UDim2.new(0.9, 0, 0, 4)
+        barBg.Position = UDim2.new(0.05, 0, 0.75, 0)
+        barBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        createCorner(barBg, 2)
+
+        local barFill = Instance.new("Frame", barBg)
+        barFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+        barFill.BackgroundColor3 = Library.Colors.NEON_ORANGE
+        createCorner(barFill, 2)
+
+        local dragging = false
+        local function update(input)
+            local delta = math.clamp((input.Position.X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X, 0, 1)
+            local value = math.floor(min + (max - min) * delta)
+            barFill.Size = UDim2.new(delta, 0, 1, 0)
+            title.Text = text .. ": " .. value
+            cb(value)
+        end
+
+        barBg.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                update(input)
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                update(input)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+    end
+
+    -- FUNÇÃO DROPDOWN
     function tab:CreateDropdown(text, list, cb)
         local expanded = false
         local dropFrame = Instance.new("Frame", content)
