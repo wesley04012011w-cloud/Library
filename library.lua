@@ -1,6 +1,4 @@
--- [[ BitcodeLibrary v6.5 - Edição Ghz Beta v1 ]]
--- Especialista: bitcode assistente
--- Melhoria: Input Tracking (ID Filtering) para Mobile Precision
+-- [[ BitcodeLibrary v6.5 - FIXED CLEAN VERSION ]]
 
 local Library = {}
 Library.__index = Library
@@ -24,18 +22,17 @@ local function createCorner(obj, r)
     c.CornerRadius = UDim.new(0, r or 12)
 end
 
--- [ SISTEMA DRAGGABLE COM FILTRO DE INPUT ]
+-- DRAG
 local function makeDraggable(frame, handle)
-    local dragInput
-    local dragStart
-    local startPos
+    local dragInput, dragStart, startPos
 
     handle.InputBegan:Connect(function(input)
-        if not dragInput and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
             dragStart = input.Position
             startPos = frame.Position
-            
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragInput = nil
@@ -45,9 +42,14 @@ local function makeDraggable(frame, handle)
     end)
 
     handle.InputChanged:Connect(function(input)
-        if input == dragInput and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if input == dragInput then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
 end
@@ -59,74 +61,36 @@ function Library:Init()
     local screen = Instance.new("ScreenGui", CoreGui)
     screen.Name = "BitcodeLibrary"
     screen.ResetOnSpawn = false
-    self.ScreenGui = screen
 
     local main = Instance.new("Frame", screen)
-    main.Name = "MainFrame"
-    main.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    main.Size = UDim2.new(0, 350, 0, 250)
     main.Position = UDim2.new(0.5, -175, 0.5, -125)
-    main.Size = UDim2.new(0, 350, 0, 250) 
-    main.Active = true -- Garante detecção de input
+    main.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    main.Active = true
     createCorner(main, 15)
-    self.MainFrame = main
 
     local stroke = Instance.new("UIStroke", main)
     stroke.Color = Library.Colors.NEON_ORANGE
     stroke.Thickness = 2
 
-    -- TopBar
+    -- TOPBAR
     local topBar = Instance.new("Frame", main)
     topBar.Size = UDim2.new(1, 0, 0, 38)
     topBar.BackgroundColor3 = Library.Colors.TOPBAR
-    topBar.Active = true 
+    topBar.Active = true
     makeDraggable(main, topBar)
-    
-    local topBarTitle = Instance.new("TextLabel", topBar)
-    topBarTitle.Size = UDim2.new(1, -60, 1, 0)
-    topBarTitle.Position = UDim2.new(0, 15, 0, 0)
-    topBarTitle.BackgroundTransparency = 1
-    topBarTitle.Text = "Ghz betav1"
-    topBarTitle.TextColor3 = Library.Colors.ACCENT_WHITE
-    topBarTitle.Font = Enum.Font.GothamBold
-    topBarTitle.TextSize = 14
-    topBarTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- [ SISTEMA DE RESIZE OTIMIZADO ]
-    local resizeBtn = Instance.new("TextButton", main)
-    resizeBtn.Size = UDim2.new(0, 30, 0, 30)
-    resizeBtn.Position = UDim2.new(1, -30, 1, -30)
-    resizeBtn.BackgroundTransparency = 1
-    resizeBtn.Text = "◢"
-    resizeBtn.TextColor3 = Library.Colors.NEON_ORANGE
-    resizeBtn.TextSize = 22
-    resizeBtn.ZIndex = 10
-    resizeBtn.Active = true
+    local title = Instance.new("TextLabel", topBar)
+    title.Size = UDim2.new(1, -20, 1, 0)
+    title.Position = UDim2.new(0, 10, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "Ghz betav1"
+    title.TextColor3 = Library.Colors.ACCENT_WHITE
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 14
+    title.TextXAlignment = Enum.TextXAlignment.Left
 
-    local currentResizeInput = nil
-
-    resizeBtn.InputBegan:Connect(function(input)
-        if not currentResizeInput and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-            currentResizeInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == currentResizeInput then
-            local mousePos = input.Position
-            local absPos = main.AbsolutePosition
-            local newSizeX = math.clamp(mousePos.X - absPos.X, 280, 800)
-            local newSizeY = math.clamp(mousePos.Y - absPos.Y, 180, 600)
-            main.Size = UDim2.new(0, newSizeX, 0, newSizeY)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input == currentResizeInput then
-            currentResizeInput = nil
-        end
-    end)
-
-    -- Layout Estrutural
+    -- SIDEBAR
     local sidebar = Instance.new("Frame", main)
     sidebar.Position = UDim2.new(0, 0, 0, 38)
     sidebar.Size = UDim2.new(0, 100, 1, -38)
@@ -140,19 +104,16 @@ function Library:Init()
     tabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Instance.new("UIListLayout", tabList).Padding = UDim.new(0, 6)
 
-    -- Holder pra cortar conteúdo (resolve borda bugada)
-local contentHolder = Instance.new("Frame", main)
-contentHolder.Position = UDim2.new(0, 105, 0, 38) -- alinhado com topbar
-contentHolder.Size = UDim2.new(1, -112, 1, -40)
-contentHolder.ClipsDescendants = true
+    -- CONTAINER
+    local container = Instance.new("Frame", main)
+    container.Position = UDim2.new(0, 105, 0, 38)
+    container.Size = UDim2.new(1, -110, 1, -40)
+    container.BackgroundTransparency = 1
+    container.ClipsDescendants = true
 
-local container = Instance.new("Frame", contentHolder)
-container.Size = UDim2.new(1, 0, 1, 0)
-container.BackgroundTransparency = 1
+    self.Container = container
+    self.TabList = tabList
 
-self.Container = container
-self.TabList = tabList
-   
     return self
 end
 
@@ -167,118 +128,72 @@ function Library:CreateTab(name)
     createCorner(btn, 10)
 
     local content = Instance.new("ScrollingFrame", self.Container)
-content.Size = UDim2.new(1, 0, 1, 0)
-content.BackgroundTransparency = 1
-
-local inner = Instance.new("Frame", content)
-inner.Size = UDim2.new(1, -4, 1, -4)
-inner.Position = UDim2.new(0, 2, 0, 2)
-inner.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
-inner.BorderSizePixel = 0
-inner.ClipsDescendants = true
-
-createCorner(inner, 15)
-
-    
-
-local padding = Instance.new("UIPadding", inner)
-padding.PaddingTop = UDim.new(0, 5)
-padding.PaddingLeft = UDim.new(0, 5)
-padding.PaddingRight = UDim.new(0, 5)
-padding.PaddingBottom = UDim.new(0, 5)
-
-    content.Size = UDim2.new(1, -4, 1, -4)
-    content.Position = UDim2.new(0, 2, 0, 2)    
+    content.Size = UDim2.new(1, 0, 1, 0)
+    content.BackgroundTransparency = 1
     content.Visible = false
     content.AutomaticCanvasSize = Enum.AutomaticSize.Y
     content.ScrollBarThickness = 2
-    Instance.new("UIListLayout", inner).Padding = UDim.new(0, 10)
+
+    local inner = Instance.new("Frame", content)
+    inner.Size = UDim2.new(1, 0, 1, 0)
+    inner.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    inner.BorderSizePixel = 0
+    inner.ClipsDescendants = true
+    createCorner(inner, 15)
+
+    local padding = Instance.new("UIPadding", inner)
+    padding.PaddingTop = UDim.new(0, 10)
+    padding.PaddingLeft = UDim.new(0, 10)
+    padding.PaddingRight = UDim.new(0, 10)
+    padding.PaddingBottom = UDim.new(0, 10)
+
+    local layout = Instance.new("UIListLayout", inner)
+    layout.Padding = UDim.new(0, 10)
 
     btn.MouseButton1Click:Connect(function()
-        for _, v in pairs(self.Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
+        for _, v in pairs(self.Container:GetChildren()) do
+            if v:IsA("ScrollingFrame") then v.Visible = false end
+        end
         content.Visible = true
-        for _, v in pairs(self.TabList:GetChildren()) do if v:IsA("TextButton") then v.BackgroundColor3 = Library.Colors.DARK_GREY end end
+
+        for _, v in pairs(self.TabList:GetChildren()) do
+            if v:IsA("TextButton") then
+                v.BackgroundColor3 = Library.Colors.DARK_GREY
+            end
+        end
         btn.BackgroundColor3 = Library.Colors.NEON_ORANGE
     end)
 
-    if not self._hasTab then self._hasTab = true content.Visible = true btn.BackgroundColor3 = Library.Colors.NEON_ORANGE end
+    if not self._hasTab then
+        self._hasTab = true
+        content.Visible = true
+        btn.BackgroundColor3 = Library.Colors.NEON_ORANGE
+    end
 
     local tab = {}
 
-    -- [ SLIDER COM FILTRO DE INPUT ]
-    function tab:CreateSlider(text, min, max, default, cb)
-        local sliderFrame = Instance.new("Frame", inner)
-        sliderFrame.Size = UDim2.new(1, -10, 0, 55)
-        sliderFrame.BackgroundColor3 = Library.Colors.DARK_GREY
-        sliderFrame.Active = true
-        createCorner(sliderFrame, 12)
-
-        local title = Instance.new("TextLabel", sliderFrame)
-        title.Size = UDim2.new(1, -20, 0, 25)
-        title.Position = UDim2.new(0, 15, 0, 8)
-        title.BackgroundTransparency = 1
-        title.Text = text .. ": " .. default
-        title.TextColor3 = Library.Colors.ACCENT_WHITE
-        title.Font = Enum.Font.Gotham
-        title.TextSize = 12
-        title.TextXAlignment = Enum.TextXAlignment.Left
-
-        local barBg = Instance.new("Frame", sliderFrame)
-        barBg.Size = UDim2.new(0.9, 0, 0, 8)
-        barBg.Position = UDim2.new(0.05, 0, 0.75, -5)
-        barBg.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        barBg.Active = true
-        createCorner(barBg, 4)
-
-        local barFill = Instance.new("Frame", barBg)
-        barFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-        barFill.BackgroundColor3 = Library.Colors.NEON_ORANGE
-        createCorner(barFill, 4)
-
-        local currentSliderInput = nil
-
-        local function update(input)
-            local inputPos = input.Position.X
-            local barPos = barBg.AbsolutePosition.X
-            local barSize = barBg.AbsoluteSize.X
-            local delta = math.clamp((inputPos - barPos) / barSize, 0, 1)
-            local value = math.floor(min + (max - min) * delta)
-            barFill.Size = UDim2.new(delta, 0, 1, 0)
-            title.Text = text .. ": " .. value
-            cb(value)
-        end
-
-        barBg.InputBegan:Connect(function(input)
-            if not currentSliderInput and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-                currentSliderInput = input
-                update(input)
-            end
-        end)
-
-        UserInputService.InputChanged:Connect(function(input)
-            if input == currentSliderInput then
-                update(input)
-            end
-        end)
-
-        UserInputService.InputEnded:Connect(function(input)
-            if input == currentSliderInput then
-                currentSliderInput = nil
-            end
-        end)
+    function tab:CreateButton(text, cb)
+        local b = Instance.new("TextButton", inner)
+        b.Size = UDim2.new(1, 0, 0, 40)
+        b.Text = text
+        b.BackgroundColor3 = Library.Colors.HIGHLIGHT
+        b.TextColor3 = Library.Colors.ACCENT_WHITE
+        b.Font = Enum.Font.GothamSemibold
+        b.TextSize = 13
+        createCorner(b, 12)
+        b.MouseButton1Click:Connect(cb)
     end
 
-    -- [ OUTROS COMPONENTES MANTIDOS ]
     function tab:CreateToggle(text, cb)
         local state = false
+
         local f = Instance.new("TextButton", inner)
-        f.Size = UDim2.new(0.96, 0, 0, 42)
+        f.Size = UDim2.new(1, 0, 0, 42)
         f.BackgroundColor3 = Library.Colors.DARK_GREY
         f.Text = ""
         f.AutoButtonColor = false
-        f.Active = true
         createCorner(f, 12)
-        
+
         local l = Instance.new("TextLabel", f)
         l.Size = UDim2.new(0.7, 0, 1, 0)
         l.Position = UDim2.new(0, 15, 0, 0)
@@ -303,22 +218,73 @@ padding.PaddingBottom = UDim.new(0, 5)
 
         f.MouseButton1Click:Connect(function()
             state = not state
-            TweenService:Create(box, TweenInfo.new(0.25), {BackgroundColor3 = state and Library.Colors.NEON_ORANGE or Color3.fromRGB(40, 40, 40)}):Play()
-            TweenService:Create(dot, TweenInfo.new(0.25), {Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}):Play()
+            TweenService:Create(box, TweenInfo.new(0.25), {
+                BackgroundColor3 = state and Library.Colors.NEON_ORANGE or Color3.fromRGB(40,40,40)
+            }):Play()
+
+            TweenService:Create(dot, TweenInfo.new(0.25), {
+                Position = state and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
+            }):Play()
+
             cb(state)
         end)
     end
 
-    function tab:CreateButton(text, cb)
-        local b = Instance.new("TextButton", inner)
-        b.Size = UDim2.new(0.96, 0, 0, 38)
-        b.Text = text
-        b.BackgroundColor3 = Library.Colors.HIGHLIGHT
-        b.TextColor3 = Library.Colors.ACCENT_WHITE
-        b.Font = Enum.Font.GothamSemibold
-        b.TextSize = 13
-        createCorner(b, 12)
-        b.MouseButton1Click:Connect(cb)
+    function tab:CreateSlider(text, min, max, default, cb)
+        local sliderFrame = Instance.new("Frame", inner)
+        sliderFrame.Size = UDim2.new(1, 0, 0, 55)
+        sliderFrame.BackgroundColor3 = Library.Colors.DARK_GREY
+        createCorner(sliderFrame, 12)
+
+        local title = Instance.new("TextLabel", sliderFrame)
+        title.Size = UDim2.new(1, -20, 0, 25)
+        title.Position = UDim2.new(0, 15, 0, 8)
+        title.BackgroundTransparency = 1
+        title.Text = text .. ": " .. default
+        title.TextColor3 = Library.Colors.ACCENT_WHITE
+        title.Font = Enum.Font.Gotham
+        title.TextSize = 12
+        title.TextXAlignment = Enum.TextXAlignment.Left
+
+        local barBg = Instance.new("Frame", sliderFrame)
+        barBg.Size = UDim2.new(0.9, 0, 0, 8)
+        barBg.Position = UDim2.new(0.05, 0, 0.75, -5)
+        barBg.BackgroundColor3 = Color3.fromRGB(35,35,35)
+        createCorner(barBg, 4)
+
+        local barFill = Instance.new("Frame", barBg)
+        barFill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
+        barFill.BackgroundColor3 = Library.Colors.NEON_ORANGE
+        createCorner(barFill, 4)
+
+        local dragging = false
+
+        local function update(input)
+            local delta = math.clamp(
+                (input.Position.X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X,
+                0, 1
+            )
+            local value = math.floor(min + (max - min) * delta)
+            barFill.Size = UDim2.new(delta,0,1,0)
+            title.Text = text .. ": " .. value
+            cb(value)
+        end
+
+        barBg.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                update(input)
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging then update(input) end
+        end)
+
+        UserInputService.InputEnded:Connect(function()
+            dragging = false
+        end)
     end
 
     return tab
