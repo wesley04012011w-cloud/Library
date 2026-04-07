@@ -1,7 +1,7 @@
 -- [[ BitcodeLibrary v6.5 - Edição Ghz Beta v1 ]]
 -- Especialista: bitcode assistente
 -- Melhoria: Input Tracking (ID Filtering) para Mobile Precision
-print("VERSAO NOVA TESTE FINAL")
+
 local Library = {}
 Library.__index = Library
 
@@ -66,7 +66,6 @@ function Library:Init()
     main.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
     main.Position = UDim2.new(0.5, -175, 0.5, -125)
     main.Size = UDim2.new(0, 350, 0, 250) 
-    main.ClipsDescendants = true
     main.Active = true -- Garante detecção de input
     createCorner(main, 15)
     self.MainFrame = main
@@ -143,10 +142,8 @@ function Library:Init()
 
     -- Holder pra cortar conteúdo (resolve borda bugada)
 local contentHolder = Instance.new("Frame", main)
-createCorner(contentHolder, 15)
 contentHolder.Position = UDim2.new(0, 105, 0, 38) -- alinhado com topbar
 contentHolder.Size = UDim2.new(1, -112, 1, -40)
-contentHolder.BackgroundTransparency = 1
 contentHolder.ClipsDescendants = true
 
 local container = Instance.new("Frame", contentHolder)
@@ -170,6 +167,22 @@ function Library:CreateTab(name)
     createCorner(btn, 10)
 
     local content = Instance.new("ScrollingFrame", self.Container)
+    
+    local inner = Instance.new("Frame", inner)
+    inner.Size = UDim2.new(1, -4, 1, -4)
+    inner.Position = UDim2.new(0, 2, 0, 2)
+    inner.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    inner.BorderSizePixel = 0
+    Library.Colors.BACKGROUND_BLACK
+    inner.BorderSizePixel = 0
+    
+createCorner(inner, 15)
+inner.ClipsDescendants = true
+
+createCorner(inner, 15)
+inner.ClipsDescendants = true
+
+createCorner(inner, 15)
 
 local padding = Instance.new("UIPadding", content)
 padding.PaddingTop = UDim.new(0, 5)
