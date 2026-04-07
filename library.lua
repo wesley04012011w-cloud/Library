@@ -179,7 +179,9 @@ padding.PaddingBottom = UDim.new(0, 5)
 
     content.Size = UDim2.new(1, -4, 1, -4)
     content.Position = UDim2.new(0, 2, 0, 2)
-    content.BackgroundTransparency = 1
+    content.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    content.BackgroundTransparency = 0
+    createCorner(content, 15)
     content.Visible = false
     content.AutomaticCanvasSize = Enum.AutomaticSize.Y
     content.ScrollBarThickness = 2
