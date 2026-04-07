@@ -141,13 +141,20 @@ function Library:Init()
     tabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Instance.new("UIListLayout", tabList).Padding = UDim.new(0, 6)
 
-    local container = Instance.new("Frame", main)
-    container.Position = UDim2.new(0, 105, 0, 43)
-    container.Size = UDim2.new(1, -110, 1, -48)
-    container.BackgroundTransparency = 1
-    self.Container = container
-    self.TabList = tabList
+    -- Holder pra cortar conteúdo (resolve borda bugada)
+local contentHolder = Instance.new("Frame", main)
+contentHolder.Position = UDim2.new(0, 105, 0, 38) -- alinhado com topbar
+contentHolder.Size = UDim2.new(1, -105, 1, -38)
+contentHolder.BackgroundTransparency = 1
+contentHolder.ClipsDescendants = true
 
+local container = Instance.new("Frame", contentHolder)
+container.Size = UDim2.new(1, 0, 1, 0)
+container.BackgroundTransparency = 1
+
+self.Container = container
+self.TabList = tabList
+   
     return self
 end
 
