@@ -169,7 +169,15 @@ function Library:CreateTab(name)
     createCorner(btn, 10)
 
     local content = Instance.new("ScrollingFrame", self.Container)
-    content.Size = UDim2.new(1, 0, 1, 0)
+
+local padding = Instance.new("UIPadding", content)
+padding.PaddingTop = UDim.new(0, 5)
+padding.PaddingLeft = UDim.new(0, 5)
+padding.PaddingRight = UDim.new(0, 5)
+padding.PaddingBottom = UDim.new(0, 5)
+
+    content.Size = UDim2.new(1, -4, 1, -4)
+    content.Position = UDim2.new(0, 2, 0, 2)
     content.BackgroundTransparency = 1
     content.Visible = false
     content.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -190,7 +198,7 @@ function Library:CreateTab(name)
     -- [ SLIDER COM FILTRO DE INPUT ]
     function tab:CreateSlider(text, min, max, default, cb)
         local sliderFrame = Instance.new("Frame", content)
-        sliderFrame.Size = UDim2.new(0.96, 0, 0, 55)
+        sliderFrame.Size = UDim2.new(1, -10, 0, 55)
         sliderFrame.BackgroundColor3 = Library.Colors.DARK_GREY
         sliderFrame.Active = true
         createCorner(sliderFrame, 12)
