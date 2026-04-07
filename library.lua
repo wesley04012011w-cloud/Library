@@ -1,7 +1,7 @@
 -- [[ BitcodeLibrary v6.5 - Edição Ghz Beta v1 ]]
 -- Especialista: bitcode assistente
 -- Melhoria: Input Tracking (ID Filtering) para Mobile Precision
-print("VERSAO NOVA 123")
+
 local Library = {}
 Library.__index = Library
 
@@ -167,38 +167,32 @@ function Library:CreateTab(name)
     createCorner(btn, 10)
 
     local content = Instance.new("ScrollingFrame", self.Container)
-    
-    local inner = Instance.new("Frame", inner)
-    inner.Size = UDim2.new(1, -4, 1, -4)
-    inner.Position = UDim2.new(0, 2, 0, 2)
-    inner.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
-    inner.BorderSizePixel = 0
-    Library.Colors.BACKGROUND_BLACK
-    inner.BorderSizePixel = 0
-    
-createCorner(inner, 15)
-inner.ClipsDescendants = true
+content.Size = UDim2.new(1, 0, 1, 0)
+content.BackgroundTransparency = 1
 
-createCorner(inner, 15)
+local inner = Instance.new("Frame", content)
+inner.Size = UDim2.new(1, -4, 1, -4)
+inner.Position = UDim2.new(0, 2, 0, 2)
+inner.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+inner.BorderSizePixel = 0
 inner.ClipsDescendants = true
 
 createCorner(inner, 15)
 
-local padding = Instance.new("UIPadding", content)
+    
+
+local padding = Instance.new("UIPadding", inner)
 padding.PaddingTop = UDim.new(0, 5)
 padding.PaddingLeft = UDim.new(0, 5)
 padding.PaddingRight = UDim.new(0, 5)
 padding.PaddingBottom = UDim.new(0, 5)
 
     content.Size = UDim2.new(1, -4, 1, -4)
-    content.Position = UDim2.new(0, 2, 0, 2)
-    content.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
-    content.BackgroundTransparency = 0
-    createCorner(content, 15)
+    content.Position = UDim2.new(0, 2, 0, 2)    
     content.Visible = false
     content.AutomaticCanvasSize = Enum.AutomaticSize.Y
     content.ScrollBarThickness = 2
-    Instance.new("UIListLayout", content).Padding = UDim.new(0, 10)
+    Instance.new("UIListLayout", inner).Padding = UDim.new(0, 10)
 
     btn.MouseButton1Click:Connect(function()
         for _, v in pairs(self.Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
@@ -213,7 +207,7 @@ padding.PaddingBottom = UDim.new(0, 5)
 
     -- [ SLIDER COM FILTRO DE INPUT ]
     function tab:CreateSlider(text, min, max, default, cb)
-        local sliderFrame = Instance.new("Frame", content)
+        local sliderFrame = Instance.new("Frame", inner)
         sliderFrame.Size = UDim2.new(1, -10, 0, 55)
         sliderFrame.BackgroundColor3 = Library.Colors.DARK_GREY
         sliderFrame.Active = true
@@ -277,7 +271,7 @@ padding.PaddingBottom = UDim.new(0, 5)
     -- [ OUTROS COMPONENTES MANTIDOS ]
     function tab:CreateToggle(text, cb)
         local state = false
-        local f = Instance.new("TextButton", content)
+        local f = Instance.new("TextButton", inner)
         f.Size = UDim2.new(0.96, 0, 0, 42)
         f.BackgroundColor3 = Library.Colors.DARK_GREY
         f.Text = ""
@@ -316,7 +310,7 @@ padding.PaddingBottom = UDim.new(0, 5)
     end
 
     function tab:CreateButton(text, cb)
-        local b = Instance.new("TextButton", content)
+        local b = Instance.new("TextButton", inner)
         b.Size = UDim2.new(0.96, 0, 0, 38)
         b.Text = text
         b.BackgroundColor3 = Library.Colors.HIGHLIGHT
