@@ -143,8 +143,9 @@ function Library:Init()
 
     -- Holder pra cortar conteúdo (resolve borda bugada)
 local contentHolder = Instance.new("Frame", main)
+createCorner(contentHolder, 15)
 contentHolder.Position = UDim2.new(0, 105, 0, 38) -- alinhado com topbar
-contentHolder.Size = UDim2.new(1, -105, 1, -38)
+contentHolder.Size = UDim2.new(1, -112, 1, -40)
 contentHolder.BackgroundTransparency = 1
 contentHolder.ClipsDescendants = true
 
