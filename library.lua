@@ -1,7 +1,7 @@
 -- [[ BitcodeLibrary v6.5 - Edição Ghz Beta v1 ]]
 -- Especialista: bitcode assistente
 -- Melhoria: Input Tracking (ID Filtering) para Mobile Precision
-
+print("VERSAO NOVA 123")
 local Library = {}
 Library.__index = Library
 
