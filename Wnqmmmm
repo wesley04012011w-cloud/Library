@@ -1,0 +1,375 @@
+local Library = {}
+Library.__index = Library
+
+-- CONFIGURAÇÃO DE CORES (NEON CYAN)
+Library.Colors = {
+    NEON_ORANGE = Color3.fromRGB(0, 170, 255),
+    BACKGROUND_BLACK = Color3.fromRGB(12, 12, 12),
+    ACCENT_WHITE = Color3.fromRGB(255, 255, 255),
+    DARK_GREY = Color3.fromRGB(25, 25, 25),
+    HIGHLIGHT = Color3.fromRGB(40, 40, 40),
+    TOPBAR = Color3.fromRGB(18, 18, 18),
+}
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local ASSET_ID = "rbxassetid://3560374789284580"
+
+-- FUNÇÕES UTILITÁRIAS
+local function createCorner(obj, r)
+    local c = Instance.new("UICorner", obj)
+    c.CornerRadius = UDim.new(0, r or 12)
+end
+
+local function makeDraggable(frame, handle)
+    local dragging, dragInput, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- METODO INIT ATUALIZADO COM ARGUMENTOS DE TEXTO
+function Library:Init(config)
+    local cfg = config or {}
+    local uiName = cfg.Name or "BITCODE ENGINE"
+    local uiVersion = cfg.Version or "v1.0"
+
+    local old = CoreGui:FindFirstChild("BitcodeLibrary")
+    if old then old:Destroy() end
+
+    local screen = Instance.new("ScreenGui", CoreGui)
+    screen.Name = "BitcodeLibrary"
+    screen.ResetOnSpawn = false
+
+    -- FRAME PRINCIPAL
+    local main = Instance.new("Frame", screen)
+    main.Size = UDim2.new(0, 400, 0, 280)
+    main.Position = UDim2.new(0.5, -200, 0.5, -140)
+    main.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    main.BorderSizePixel = 0
+    main.ClipsDescendants = true
+    createCorner(main, 12)
+
+    local stroke = Instance.new("UIStroke", main)
+    stroke.Color = Library.Colors.NEON_ORANGE
+    stroke.Thickness = 1.8
+
+    -- BOTÃO ABRIR/FECHAR
+    local toggleBtn = Instance.new("TextButton", screen)
+    toggleBtn.Size = UDim2.new(0, 50, 0, 50)
+    toggleBtn.Position = UDim2.new(0, 20, 0.15, 0)
+    toggleBtn.BackgroundColor3 = Library.Colors.TOPBAR
+    toggleBtn.Text = ""
+    createCorner(toggleBtn, 25)
+    
+    local btnIcon = Instance.new("ImageLabel", toggleBtn)
+    btnIcon.Size = UDim2.new(0, 30, 0, 30)
+    btnIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    btnIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    btnIcon.BackgroundTransparency = 1
+    btnIcon.Image = ASSET_ID
+    btnIcon.ImageColor3 = Library.Colors.NEON_ORANGE
+
+    local btnStroke = Instance.new("UIStroke", toggleBtn)
+    btnStroke.Color = Library.Colors.NEON_ORANGE
+    btnStroke.Thickness = 1.5
+
+    makeDraggable(toggleBtn, toggleBtn)
+
+    -- TOPBAR
+    local topBar = Instance.new("Frame", main)
+    topBar.Size = UDim2.new(1, 0, 0, 40) -- Aumentada levemente para o estilo Redz
+    topBar.BackgroundColor3 = Library.Colors.TOPBAR
+    topBar.BorderSizePixel = 0
+    createCorner(topBar, 12)
+    
+    local filler = Instance.new("Frame", topBar)
+    filler.Size = UDim2.new(1, 0, 0, 10)
+    filler.Position = UDim2.new(0, 0, 1, -10)
+    filler.BackgroundColor3 = Library.Colors.TOPBAR
+    filler.BorderSizePixel = 0
+
+    makeDraggable(main, topBar)
+
+    -- ÍCONE NA TOPBAR
+    local topBarIcon = Instance.new("ImageLabel", topBar)
+    topBarIcon.Size = UDim2.new(0, 24, 0, 24)
+    topBarIcon.Position = UDim2.new(0, 10, 0.5, -12)
+    topBarIcon.BackgroundTransparency = 1
+    topBarIcon.Image = ASSET_ID
+    topBarIcon.ImageColor3 = Library.Colors.NEON_ORANGE
+
+    -- ESTILO REDZ HUB: TITULO E VERSÃO EMPILHADOS
+    local titleName = Instance.new("TextLabel", topBar)
+    titleName.Size = UDim2.new(1, -70, 0.5, 0)
+    titleName.Position = UDim2.new(0, 42, 0, 4)
+    titleName.BackgroundTransparency = 1
+    titleName.Text = uiName
+    titleName.TextColor3 = Library.Colors.ACCENT_WHITE
+    titleName.Font = Enum.Font.GothamBold
+    titleName.TextSize = 14
+    titleName.TextXAlignment = Enum.TextXAlignment.Left
+
+    local titleVersion = Instance.new("TextLabel", topBar)
+    titleVersion.Size = UDim2.new(1, -70, 0.5, 0)
+    titleVersion.Position = UDim2.new(0, 42, 0.5, 0)
+    titleVersion.BackgroundTransparency = 1
+    titleVersion.Text = uiVersion
+    titleVersion.TextColor3 = Color3.fromRGB(180, 180, 180)
+    titleVersion.Font = Enum.Font.Gotham
+    titleVersion.TextSize = 10
+    titleVersion.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- BOTÃO MINIMIZAR
+    local minimizeBtn = Instance.new("TextButton", topBar)
+    minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+    minimizeBtn.Position = UDim2.new(1, -35, 0.5, -15)
+    minimizeBtn.Text = "-"
+    minimizeBtn.BackgroundTransparency = 1
+    minimizeBtn.TextColor3 = Library.Colors.ACCENT_WHITE
+    minimizeBtn.Font = Enum.Font.GothamBold
+    minimizeBtn.TextSize = 18
+
+    -- SIDEBAR
+    local sidebar = Instance.new("Frame", main)
+    sidebar.Position = UDim2.new(0, 0, 0, 40)
+    sidebar.Size = UDim2.new(0, 100, 1, -40)
+    sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    sidebar.BorderSizePixel = 0
+    createCorner(sidebar, 12)
+
+    local container = Instance.new("Frame", main)
+    container.Position = UDim2.new(0, 105, 0, 45)
+    container.Size = UDim2.new(1, -110, 1, -50)
+    container.BackgroundTransparency = 1
+
+    -- LÓGICA DE MINIMIZAR
+    local minimized = false
+    local originalSize = main.Size
+    minimizeBtn.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        if minimized then
+            main.Size = UDim2.new(0, 220, 0, 40)
+            sidebar.Visible = false
+            container.Visible = false
+            minimizeBtn.Text = "+"
+        else
+            main.Size = originalSize
+            sidebar.Visible = true
+            container.Visible = true
+            minimizeBtn.Text = "-"
+        end
+    end)
+
+    -- LÓGICA DE ABRIR/FECHAR
+    local uiOpen = true
+    toggleBtn.MouseButton1Click:Connect(function()
+        uiOpen = not uiOpen
+        main.Visible = uiOpen
+        TweenService:Create(btnIcon, TweenInfo.new(0.3), {
+            Rotation = uiOpen and 0 or 180
+        }):Play()
+    end)
+
+    local tabList = Instance.new("ScrollingFrame", sidebar)
+    tabList.Size = UDim2.new(1, 0, 1, -10)
+    tabList.Position = UDim2.new(0, 0, 0, 5)
+    tabList.BackgroundTransparency = 1
+    tabList.ScrollBarThickness = 0
+    tabList.CanvasSize = UDim2.new(0,0,0,0)
+    tabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    local tabLayout = Instance.new("UIListLayout", tabList)
+    tabLayout.Padding = UDim.new(0, 5)
+    tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    self.Container = container
+    self.TabList = tabList
+    return self
+end
+
+function Library:CreateTab(name)
+    local btn = Instance.new("TextButton", self.TabList)
+    btn.Size = UDim2.new(0.9, 0, 0, 30)
+    btn.Text = name
+    btn.BackgroundColor3 = Library.Colors.DARK_GREY
+    btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 10
+    btn.AutoButtonColor = false
+    createCorner(btn, 6)
+
+    local content = Instance.new("ScrollingFrame", self.Container)
+    content.Size = UDim2.new(1, 0, 1, 0)
+    content.BackgroundTransparency = 1
+    content.Visible = false
+    content.ScrollBarThickness = 2
+    content.ScrollBarImageColor3 = Library.Colors.NEON_ORANGE
+    content.CanvasSize = UDim2.new(0,0,0,0)
+    content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    local layout = Instance.new("UIListLayout", content)
+    layout.Padding = UDim.new(0, 8)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local padding = Instance.new("UIPadding", content)
+    padding.PaddingLeft = UDim.new(0, 5)
+    padding.PaddingRight = UDim.new(0, 5)
+
+    btn.MouseButton1Click:Connect(function()
+        for _, v in pairs(self.Container:GetChildren()) do
+            if v:IsA("ScrollingFrame") then v.Visible = false end
+        end
+        content.Visible = true
+        for _, v in pairs(self.TabList:GetChildren()) do
+            if v:IsA("TextButton") then
+                v.BackgroundColor3 = Library.Colors.DARK_GREY
+                v.TextColor3 = Color3.fromRGB(150, 150, 150)
+            end
+        end
+        btn.BackgroundColor3 = Library.Colors.HIGHLIGHT
+        btn.TextColor3 = Library.Colors.NEON_ORANGE
+    end)
+
+    if not self._hasTab then
+        self._hasTab = true
+        content.Visible = true
+        btn.TextColor3 = Library.Colors.NEON_ORANGE
+    end
+
+    local tab = {}
+
+    function tab:CreateButton(text, cb)
+        local b = Instance.new("TextButton", content)
+        b.Size = UDim2.new(1, 0, 0, 35)
+        b.Text = text
+        b.BackgroundColor3 = Library.Colors.DARK_GREY
+        b.TextColor3 = Library.Colors.ACCENT_WHITE
+        b.Font = Enum.Font.GothamSemibold
+        b.TextSize = 12
+        createCorner(b, 8)
+        b.MouseButton1Click:Connect(cb)
+    end
+
+    function tab:CreateToggle(text, cb)
+        local state = false
+        local tFrame = Instance.new("TextButton", content)
+        tFrame.Size = UDim2.new(1, 0, 0, 35)
+        tFrame.BackgroundColor3 = Library.Colors.DARK_GREY
+        tFrame.Text = ""
+        tFrame.AutoButtonColor = false
+        createCorner(tFrame, 8)
+
+        local tLabel = Instance.new("TextLabel", tFrame)
+        tLabel.Size = UDim2.new(1, -50, 1, 0)
+        tLabel.Position = UDim2.new(0, 10, 0, 0)
+        tLabel.BackgroundTransparency = 1
+        tLabel.Text = text
+        tLabel.TextColor3 = Library.Colors.ACCENT_WHITE
+        tLabel.Font = Enum.Font.Gotham
+        tLabel.TextSize = 12
+        tLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+        local box = Instance.new("Frame", tFrame)
+        box.Size = UDim2.new(0, 30, 0, 16)
+        box.Position = UDim2.new(1, -40, 0.5, -8)
+        box.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        createCorner(box, 8)
+
+        local dot = Instance.new("Frame", box)
+        dot.Size = UDim2.new(0, 12, 0, 12)
+        dot.Position = UDim2.new(0, 2, 0.5, -6)
+        dot.BackgroundColor3 = Color3.new(1, 1, 1)
+        createCorner(dot, 6)
+
+        tFrame.MouseButton1Click:Connect(function()
+            state = not state
+            TweenService:Create(box, TweenInfo.new(0.2), {
+                BackgroundColor3 = state and Library.Colors.NEON_ORANGE or Color3.fromRGB(45, 45, 45)
+            }):Play()
+            TweenService:Create(dot, TweenInfo.new(0.2), {
+                Position = state and UDim2.new(1, -14, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)
+            }):Play()
+            cb(state)
+        end)
+    end
+
+    function tab:CreateSlider(text, min, max, default, cb)
+        local sFrame = Instance.new("Frame", content)
+        sFrame.Size = UDim2.new(1, 0, 0, 45)
+        sFrame.BackgroundColor3 = Library.Colors.DARK_GREY
+        createCorner(sFrame, 8)
+
+        local sTitle = Instance.new("TextLabel", sFrame)
+        sTitle.Size = UDim2.new(1, -20, 0, 20)
+        sTitle.Position = UDim2.new(0, 10, 0, 5)
+        sTitle.BackgroundTransparency = 1
+        sTitle.Text = text .. ": " .. default
+        sTitle.TextColor3 = Library.Colors.ACCENT_WHITE
+        sTitle.Font = Enum.Font.Gotham
+        sTitle.TextSize = 11
+        sTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+        local barBg = Instance.new("Frame", sFrame)      
+        barBg.Size = UDim2.new(1, -20, 0, 6)
+        barBg.Position = UDim2.new(0, 10, 0, 30)
+        barBg.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        barBg.Active = true
+        createCorner(barBg, 3)
+
+        local barFill = Instance.new("Frame", barBg)
+        barFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+        barFill.BackgroundColor3 = Library.Colors.NEON_ORANGE
+        createCorner(barFill, 3)
+
+        local dragging = false
+        local currentInput = nil
+
+        local function update(input)
+            local delta = math.clamp((input.Position.X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X, 0, 1)
+            local val = math.floor(min + (max - min) * delta)
+            barFill.Size = UDim2.new(delta, 0, 1, 0)
+            sTitle.Text = text .. ": " .. val
+            cb(val)
+        end
+
+        barBg.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                currentInput = input
+                update(input)
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input == currentInput then update(input) end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input == currentInput then dragging = false currentInput = nil end
+        end)
+    end
+    return tab
+end
+
+return Library
