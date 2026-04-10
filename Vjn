@@ -1,4 +1,4 @@
-local Library = {
+getgenv().BitcodeLib = {
     Colors = {
         NEON_ORANGE = Color3.fromRGB(0, 170, 255),
         BACKGROUND_BLACK = Color3.fromRGB(12, 12, 12),
@@ -381,4 +381,4 @@ function Library:CreateTab(name)
     return tab
 end
 
-return Library
+return getgenv().BitcodeLib
