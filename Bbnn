@@ -1,0 +1,312 @@
+local Library = {
+    Colors = {
+        NEON_ORANGE = Color3.fromRGB(0, 170, 255),
+        BACKGROUND_BLACK = Color3.fromRGB(12, 12, 12),
+        ACCENT_WHITE = Color3.fromRGB(255, 255, 255),
+        DARK_GREY = Color3.fromRGB(25, 25, 25),
+        HIGHLIGHT = Color3.fromRGB(40, 40, 40),
+        TOPBAR = Color3.fromRGB(18, 18, 18),
+    },
+    ThemedElements = {},
+}
+Library.__index = Library
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local CoreGui = game:GetService("CoreGui")
+
+-- [ FUNÇÕES AUXILIARES ] --
+local function createCorner(obj, r)
+    local c = Instance.new("UICorner", obj)
+    c.CornerRadius = UDim.new(0, r or 10)
+end
+
+local function createStroke(obj, color, thickness)
+    local s = Instance.new("UIStroke", obj)
+    s.Color = color
+    s.Thickness = thickness or 1.2
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    table.insert(Library.ThemedElements, s)
+    return s
+end
+
+local function makeDraggable(frame, handle)
+    local dragging, dragInput, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- [ SISTEMA DE TEMA ] --
+function Library:SetTheme(color)
+    self.Colors.NEON_ORANGE = color
+    for _, obj in pairs(self.ThemedElements) do
+        if obj:IsA("UIStroke") then
+            obj.Color = color
+        elseif obj:IsA("Frame") and obj.Name == "Fill" then
+            obj.BackgroundColor3 = color
+        elseif obj:IsA("TextLabel") and obj.Name == "Icon" then
+            obj.TextColor3 = color
+        elseif obj:IsA("ScrollingFrame") then
+            obj.ScrollBarImageColor3 = color
+        elseif obj:IsA("TextLabel") and obj.Name == "FPSLabel" then
+            obj.TextColor3 = color
+        end
+    end
+end
+
+-- [ ANIMAÇÃO DO ÍCONE ✦ ] --
+local function rotateIcon(label)
+    task.spawn(function()
+        while label and label.Parent do
+            label.Rotation = label.Rotation + 3
+            task.wait()
+        end
+    end)
+end
+
+-- [ SISTEMA DE NOTIFICAÇÃO ] --
+function Library:Notify(title, text, duration)
+    local parent = CoreGui:FindFirstChild("BitcodeLibrary")
+    if not parent then return end
+
+    local container = parent:FindFirstChild("NotifyContainer")
+    if not container then
+        container = Instance.new("Frame", parent)
+        container.Name = "NotifyContainer"
+        container.Size = UDim2.new(0, 260, 1, -20)
+        container.Position = UDim2.new(1, -270, 0, 10)
+        container.BackgroundTransparency = 1
+
+        local layout = Instance.new("UIListLayout", container)
+        layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        layout.Padding = UDim.new(0, 8)
+    end
+
+    local frame = Instance.new("Frame", container)
+    frame.Size = UDim2.new(1, 0, 0, 0)
+    frame.BackgroundColor3 = self.Colors.BACKGROUND_BLACK
+    frame.ClipsDescendants = true
+    createCorner(frame, 8)
+
+    local stroke = createStroke(frame, self.Colors.NEON_ORANGE, 1.2)
+
+    local titleLabel = Instance.new("TextLabel", frame)
+    titleLabel.Size = UDim2.new(1, -10, 0, 18)
+    titleLabel.Position = UDim2.new(0, 8, 0, 4)
+    titleLabel.Text = title
+    titleLabel.TextColor3 = self.Colors.NEON_ORANGE
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 12
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local desc = Instance.new("TextLabel", frame)
+    desc.Size = UDim2.new(1, -10, 0, 30)
+    desc.Position = UDim2.new(0, 8, 0, 20)
+    desc.Text = text
+    desc.TextColor3 = self.Colors.ACCENT_WHITE
+    desc.Font = Enum.Font.Gotham
+    desc.TextSize = 11
+    desc.BackgroundTransparency = 1
+    desc.TextWrapped = true
+    desc.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Animação Entrada
+    TweenService:Create(frame, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 55)}):Play()
+
+    task.delay(duration or 3, function()
+        TweenService:Create(frame, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+        task.wait(0.3)
+        frame:Destroy()
+    end)
+end
+
+-- [ INICIALIZAÇÃO ] --
+function Library:Init(config)
+    local cfg = config or {}
+    local uiName = cfg.Name or "BITCODE ENGINE"
+    local uiVersion = cfg.Version or "v7.0"
+
+    if CoreGui:FindFirstChild("BitcodeLibrary") then CoreGui.BitcodeLibrary:Destroy() end
+
+    local screen = Instance.new("ScreenGui", CoreGui)
+    screen.Name = "BitcodeLibrary"
+    screen.ResetOnSpawn = false
+
+    -- Botão Abrir/Fechar
+    local toggleBtn = Instance.new("TextButton", screen)
+    toggleBtn.Size = UDim2.new(0, 50, 0, 50)
+    toggleBtn.Position = UDim2.new(0, 20, 0.15, 0)
+    toggleBtn.BackgroundColor3 = Library.Colors.TOPBAR
+    toggleBtn.Text = ""
+    createCorner(toggleBtn, 25)
+    createStroke(toggleBtn, Library.Colors.NEON_ORANGE, 1.5)
+    makeDraggable(toggleBtn, toggleBtn)
+
+    local btnIcon = Instance.new("TextLabel", toggleBtn)
+    btnIcon.Name = "Icon"
+    btnIcon.Size = UDim2.new(1, 0, 1, 0)
+    btnIcon.Text = "✦"
+    btnIcon.TextColor3 = Library.Colors.NEON_ORANGE
+    btnIcon.TextSize = 25
+    btnIcon.BackgroundTransparency = 1
+    rotateIcon(btnIcon)
+    table.insert(Library.ThemedElements, btnIcon)
+
+    -- MAIN
+    local main = Instance.new("CanvasGroup", screen)
+    main.Size = UDim2.new(0, 450, 0, 300)
+    main.Position = UDim2.new(0.5, -225, 0.5, -150)
+    main.BackgroundColor3 = Library.Colors.BACKGROUND_BLACK
+    main.GroupTransparency = 1
+    main.ClipsDescendants = true
+    createCorner(main, 12)
+    createStroke(main, Library.Colors.NEON_ORANGE, 1.8)
+
+    -- TopBar
+    local topBar = Instance.new("Frame", main)
+    topBar.Size = UDim2.new(1, 0, 0, 45)
+    topBar.BackgroundColor3 = Library.Colors.TOPBAR
+    createCorner(topBar, 12)
+    makeDraggable(main, topBar)
+
+    local topIcon = Instance.new("TextLabel", topBar)
+    topIcon.Name = "Icon"
+    topIcon.Size = UDim2.new(0, 45, 0, 45)
+    topIcon.Text = "✦"
+    topIcon.TextColor3 = Library.Colors.NEON_ORANGE
+    topIcon.TextSize = 22
+    topIcon.BackgroundTransparency = 1
+    rotateIcon(topIcon)
+    table.insert(Library.ThemedElements, topIcon)
+
+    local title = Instance.new("TextLabel", topBar)
+    title.Size = UDim2.new(1, -100, 0.5, 0)
+    title.Position = UDim2.new(0, 45, 0, 5)
+    title.Text = uiName
+    title.TextColor3 = Library.Colors.ACCENT_WHITE
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 14
+    title.BackgroundTransparency = 1
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    local version = Instance.new("TextLabel", topBar)
+    version.Size = UDim2.new(1, -100, 0.5, 0)
+    version.Position = UDim2.new(0, 45, 0.5, 0)
+    version.Text = uiVersion
+    version.TextColor3 = Color3.fromRGB(150, 150, 150)
+    version.Font = Enum.Font.Gotham
+    version.TextSize = 10
+    version.BackgroundTransparency = 1
+    version.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Estrutura de Abas
+    local sidebar = Instance.new("Frame", main)
+    sidebar.Size = UDim2.new(0, 110, 1, -45)
+    sidebar.Position = UDim2.new(0, 0, 0, 45)
+    sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    createCorner(sidebar, 10)
+
+    local container = Instance.new("Frame", main)
+    container.Size = UDim2.new(1, -120, 1, -55)
+    container.Position = UDim2.new(0, 115, 0, 50)
+    container.BackgroundTransparency = 1
+    self.Container = container
+
+    local tabList = Instance.new("ScrollingFrame", sidebar)
+    tabList.Size = UDim2.new(1, 0, 1, -10)
+    tabList.BackgroundTransparency = 1
+    tabList.ScrollBarThickness = 0
+    local layout = Instance.new("UIListLayout", tabList)
+    layout.Padding = UDim.new(0, 5)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    self.TabList = tabList
+
+    -- ANIMAÇÃO DE ENTRADA
+    TweenService:Create(main, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
+
+    -- Lógica de Abrir/Fechar
+    local uiOpen = true
+    toggleBtn.MouseButton1Click:Connect(function()
+        uiOpen = not uiOpen
+        if uiOpen then
+            main.Visible = true
+            TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 0, Size = UDim2.new(0, 450, 0, 300)}):Play()
+        else
+            local t = TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {GroupTransparency = 1, Size = UDim2.new(0, 0, 0, 0)})
+            t:Play()
+            t.Completed:Connect(function() if not uiOpen then main.Visible = false end end)
+        end
+    end)
+
+    -- ABA SETTINGS
+    local configTab = self:CreateTab("Settings")
+    
+    configTab:CreateDropdown("Theme Color", {"Cyan", "Red", "Purple", "Green", "Yellow", "White"}, function(selected)
+        local themes = {
+            Cyan = Color3.fromRGB(0, 170, 255), Red = Color3.fromRGB(255, 50, 50),
+            Purple = Color3.fromRGB(170, 0, 255), Green = Color3.fromRGB(50, 255, 50),
+            Yellow = Color3.fromRGB(255, 255, 0), White = Color3.fromRGB(255, 255, 255)
+        }
+        self:SetTheme(themes[selected])
+    end)
+
+    configTab:CreateToggle("Unlock FPS", function(s)
+        if setfpscap then setfpscap(s and 999 or 60) end
+    end)
+
+    local fpsLabel
+    configTab:CreateToggle("Show FPS", function(s)
+        if s then
+            fpsLabel = Instance.new("TextLabel", screen)
+            fpsLabel.Name = "FPSLabel"
+            fpsLabel.Position = UDim2.new(0, 10, 0, 10)
+            fpsLabel.Size = UDim2.new(0, 100, 0, 20)
+            fpsLabel.TextColor3 = self.Colors.NEON_ORANGE
+            fpsLabel.BackgroundTransparency = 1
+            fpsLabel.Font = Enum.Font.Code
+            table.insert(self.ThemedElements, fpsLabel)
+            task.spawn(function()
+                while fpsLabel and fpsLabel.Parent do
+                    local dt = RunService.RenderStepped:Wait()
+                    fpsLabel.Text = "FPS: " .. math.floor(1/dt)
+                end
+            end)
+        elseif fpsLabel then fpsLabel:Destroy() end
+    end)
+
+    return self
+end
+
+function Library:CreateTab(name)
+    local btn = Instance.new("TextButton", self.TabList)
+    btn.Size = UDim2.new(0.9, 0, 0, 30)
+    btn.BackgroundColor3 = self.Colors.DARK_GREY
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 11
+    createCorner(btn, 6)
+
+    local content =
