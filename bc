@@ -1,0 +1,418 @@
+--[[
+    BITCODE ENGINE v3 - HEAVY LOAD [ULTRA COMPLETE EDITION]
+    - Layout: 250px (Width) x 80% (Height)
+    - Sistema de Blur Atmosférico Dinâmico
+    - Auto-Save via JSON (Flags)
+    - Dropdowns Multi-Seleção & Sliders Responsivos
+    - Sistema de Notificação em Pilha (Stacking)
+    - Botão de Toggle Flutuante
+]]
+
+local Library = {
+    Colors = {
+        ACCENT = Color3.fromRGB(0, 170, 255),
+        BACKGROUND = Color3.fromRGB(12, 12, 12),
+        SECONDARY = Color3.fromRGB(18, 18, 18),
+        DARK_GREY = Color3.fromRGB(25, 25, 25),
+        HIGHLIGHT = Color3.fromRGB(45, 45, 45),
+        TEXT = Color3.fromRGB(255, 255, 255),
+        TEXT_MUTED = Color3.fromRGB(165, 165, 165),
+        -- Estados
+        SUCCESS = Color3.fromRGB(46, 204, 113),
+        DANGER = Color3.fromRGB(231, 76, 60),
+        WARNING = Color3.fromRGB(241, 196, 15),
+    },
+    Registry = {},
+    Flags = {},
+    ConfigName = "Bitcode_V3_Slim.json",
+    ToggleKey = Enum.KeyCode.RightShift,
+    Open = true
+}
+
+-- [ SERVIÇOS ] --
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local Lighting = game:GetService("Lighting")
+
+-- [ PROTEÇÃO DE AMBIENTE ] --
+local writefile = writefile or function(f, d) print("Save Simulado:", d) end
+local readfile = readfile or function(f) return nil end
+local isfile = isfile or function(f) return false end
+
+-- [ UTILS ] --
+local function create(class, props)
+    local inst = Instance.new(class)
+    for i, v in pairs(props) do inst[i] = v end
+    return inst
+end
+
+local function ApplyBlurPulse()
+    task.spawn(function()
+        local blur = create("BlurEffect", {
+            Name = "BitcodeBlur",
+            Parent = Lighting,
+            Size = 0
+        })
+        local ti = TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+        TweenService:Create(blur, ti, {Size = 20}):Play()
+        task.wait(0.2)
+        TweenService:Create(blur, ti, {Size = 0}):Play()
+        task.wait(0.4)
+        blur:Destroy()
+    end)
+end
+
+local function Ripple(obj)
+    task.spawn(function()
+        local mouse = game.Players.LocalPlayer:GetMouse()
+        local circle = create("ImageLabel", {
+            Parent = obj, BackgroundTransparency = 1,
+            Image = "rbxassetid://266543268", ImageTransparency = 0.8,
+            ZIndex = 10, Size = UDim2.new(0, 0, 0, 0)
+        })
+        local pos = Vector2.new(mouse.X, mouse.Y) - obj.AbsolutePosition
+        circle.Position = UDim2.new(0, pos.X, 0, pos.Y)
+        TweenService:Create(circle, TweenInfo.new(0.5), {
+            Size = UDim2.new(0, 200, 0, 200),
+            Position = UDim2.new(0.5, -100, 0.5, -100),
+            ImageTransparency = 1
+        }):Play()
+        task.wait(0.5)
+        circle:Destroy()
+    end)
+end
+
+-- [ SISTEMA DE CONFIG ] --
+function Library:SaveConfig()
+    local success, encoded = pcall(function() return HttpService:JSONEncode(self.Flags) end)
+    if success then writefile(self.ConfigName, encoded) end
+end
+
+function Library:LoadConfig()
+    if isfile(self.ConfigName) then
+        local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(self.ConfigName)) end)
+        if success then self.Flags = decoded end
+    end
+end
+
+-- [ NOTIFICAÇÕES ] --
+function Library:Notify(title, desc, type, duration)
+    task.spawn(function()
+        local color = self.Colors[type or "ACCENT"]
+        local notifyGui = CoreGui:FindFirstChild("BitcodeNotifications") or create("ScreenGui", {Name = "BitcodeNotifications", Parent = CoreGui})
+        
+        local container = notifyGui:FindFirstChild("Holder") or create("Frame", {
+            Name = "Holder", Parent = notifyGui,
+            Size = UDim2.new(0, 220, 1, 0), Position = UDim2.new(1, -230, 0, 0),
+            BackgroundTransparency = 1
+        })
+        
+        if not container:FindFirstChild("Layout") then
+            create("UIListLayout", {
+                Name = "Layout", Parent = container, VerticalAlignment = Enum.VerticalAlignment.Bottom,
+                Padding = UDim.new(0, 8)
+            })
+        end
+
+        local box = create("Frame", {
+            Parent = container, Size = UDim2.new(1, 0, 0, 0),
+            BackgroundColor3 = self.Colors.BACKGROUND, ClipsDescendants = true
+        })
+        create("UICorner", {Parent = box, CornerRadius = UDim.new(0, 6)})
+        create("UIStroke", {Parent = box, Color = color, Thickness = 1.5})
+        
+        create("TextLabel", {
+            Parent = box, Text = title, TextColor3 = color, 
+            Font = Enum.Font.GothamBold, TextSize = 13,
+            Size = UDim2.new(1, -20, 0, 25), Position = UDim2.new(0, 10, 0, 5),
+            BackgroundTransparency = 1, TextXAlignment = "Left"
+        })
+        create("TextLabel", {
+            Parent = box, Text = desc, TextColor3 = self.Colors.TEXT, 
+            Font = Enum.Font.Gotham, TextSize = 11,
+            Size = UDim2.new(1, -20, 0, 30), Position = UDim2.new(0, 10, 0, 25),
+            BackgroundTransparency = 1, TextXAlignment = "Left", TextWrapped = true
+        })
+
+        TweenService:Create(box, TweenInfo.new(0.4), {Size = UDim2.new(1, 0, 0, 60)}):Play()
+        task.wait(duration or 4)
+        TweenService:Create(box, TweenInfo.new(0.4), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+        task.wait(0.4)
+        box:Destroy()
+    end)
+end
+
+-- [ MAIN INIT ] --
+function Library:Init(config)
+    self:LoadConfig()
+    local screen = create("ScreenGui", {Name = "Bitcode_Slim_V3", Parent = CoreGui, ResetOnSpawn = false})
+    
+    -- Main Frame (250px largura, 80% altura)
+    local main = create("CanvasGroup", {
+        Name = "Main", Parent = screen,
+        Size = UDim2.new(0, 250, 0.8, 0), Position = UDim2.new(0, 60, 0.5, 0),
+        AnchorPoint = Vector2.new(0, 0.5),
+        BackgroundColor3 = self.Colors.BACKGROUND, GroupTransparency = 0,
+        Visible = self.Open
+    })
+    create("UICorner", {Parent = main, CornerRadius = UDim.new(0, 8)})
+    create("UIStroke", {Parent = main, Color = self.Colors.ACCENT, Thickness = 2})
+
+    -- Header
+    local header = create("Frame", {
+        Parent = main, Size = UDim2.new(1, 0, 0, 45),
+        BackgroundColor3 = self.Colors.SECONDARY
+    })
+    create("TextLabel", {
+        Parent = header, Text = config.Name or "BITCODE V3",
+        Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
+        TextColor3 = self.Colors.TEXT, Font = Enum.Font.GothamBold, TextSize = 14
+    })
+
+    -- Botão de Toggle Flutuante
+    local toggleBtn = create("TextButton", {
+        Parent = screen, Size = UDim2.new(0, 40, 0, 40),
+        Position = UDim2.new(0, 10, 0.5, -20), BackgroundColor3 = self.Colors.ACCENT,
+        Text = "<", TextColor3 = Color3.new(1,1,1), Font = Enum.Font.GothamBold, TextSize = 18
+    })
+    create("UICorner", {Parent = toggleBtn, CornerRadius = UDim.new(1, 0)})
+    create("UIStroke", {Parent = toggleBtn, Color = Color3.new(1,1,1), Thickness = 2})
+
+    toggleBtn.MouseButton1Click:Connect(function()
+        self.Open = not self.Open
+        main.Visible = self.Open
+        toggleBtn.Text = self.Open and "<" or ">"
+        TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {
+            Position = self.Open and UDim2.new(0, 60, 0.5, 0) or UDim2.new(0, -300, 0.5, 0)
+        }):Play()
+    end)
+
+    -- Tab Bar (Horizontal Scrollable)
+    local tabHold = create("ScrollingFrame", {
+        Parent = main, Size = UDim2.new(1, 0, 0, 35), Position = UDim2.new(0, 0, 0, 45),
+        BackgroundColor3 = self.Colors.DARK_GREY, ScrollBarThickness = 0,
+        CanvasSize = UDim2.new(2, 0, 0, 0), AutomaticCanvasSize = "X"
+    })
+    create("UIListLayout", {Parent = tabHold, FillDirection = "Horizontal", Padding = UDim.new(0, 5), VerticalAlignment = "Center"})
+    create("UIPadding", {Parent = tabHold, PaddingLeft = UDim.new(0, 5)})
+
+    local container = create("Frame", {
+        Parent = main, Size = UDim2.new(1, -16, 1, -95), Position = UDim2.new(0, 8, 0, 88),
+        BackgroundTransparency = 1
+    })
+
+    local tabSystem = {ActiveTab = nil, ActiveBtn = nil}
+
+    function tabSystem:CreateTab(tName)
+        local tabBtn = create("TextButton", {
+            Parent = tabHold, Size = UDim2.new(0, 80, 0, 25),
+            BackgroundColor3 = Library.Colors.SECONDARY, Text = tName,
+            TextColor3 = Library.Colors.TEXT_MUTED, Font = Enum.Font.GothamBold, TextSize = 10,
+            AutoButtonColor = false
+        })
+        create("UICorner", {Parent = tabBtn, CornerRadius = UDim.new(0, 4)})
+
+        local page = create("ScrollingFrame", {
+            Parent = container, Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1, Visible = false, ScrollBarThickness = 2,
+            ScrollBarImageColor3 = Library.Colors.ACCENT, CanvasSize = UDim2.new(0,0,0,0), AutomaticCanvasSize = "Y"
+        })
+        create("UIListLayout", {Parent = page, Padding = UDim.new(0, 8)})
+
+        tabBtn.MouseButton1Click:Connect(function()
+            if tabSystem.ActiveTab == page then return end
+            
+            ApplyBlurPulse() -- Efeito de Blur ao trocar
+            
+            if tabSystem.ActiveTab then
+                tabSystem.ActiveTab.Visible = false
+                tabSystem.ActiveBtn.TextColor3 = Library.Colors.TEXT_MUTED
+                tabSystem.ActiveBtn.BackgroundColor3 = Library.Colors.SECONDARY
+            end
+            
+            page.Visible = true
+            tabBtn.TextColor3 = Library.Colors.ACCENT
+            tabBtn.BackgroundColor3 = Library.Colors.DARK_GREY
+            tabSystem.ActiveTab = page
+            tabSystem.ActiveBtn = tabBtn
+            Ripple(tabBtn)
+        end)
+
+        if not tabSystem.ActiveTab then
+            page.Visible = true
+            tabBtn.TextColor3 = Library.Colors.ACCENT
+            tabSystem.ActiveTab = page
+            tabSystem.ActiveBtn = tabBtn
+        end
+
+        local elements = {}
+
+        -- [ ELEMENTS ] --
+        function elements:CreateButton(bText, callback)
+            local btn = create("TextButton", {
+                Parent = page, Size = UDim2.new(1, 0, 0, 35),
+                BackgroundColor3 = Library.Colors.DARK_GREY, Text = bText,
+                TextColor3 = Library.Colors.TEXT, Font = Enum.Font.GothamSemibold, TextSize = 12
+            })
+            create("UICorner", {Parent = btn, CornerRadius = UDim.new(0, 5)})
+            btn.MouseButton1Click:Connect(function() Ripple(btn) callback() end)
+        end
+
+        function elements:CreateToggle(tText, flag, callback)
+            local state = Library.Flags[flag] or false
+            local tFrame = create("TextButton", {
+                Parent = page, Size = UDim2.new(1, 0, 0, 35),
+                BackgroundColor3 = Library.Colors.DARK_GREY, Text = "  " .. tText,
+                TextColor3 = Library.Colors.TEXT, Font = Enum.Font.Gotham, TextSize = 12,
+                TextXAlignment = "Left"
+            })
+            create("UICorner", {Parent = tFrame, CornerRadius = UDim.new(0, 5)})
+
+            local indicator = create("Frame", {
+                Parent = tFrame, Size = UDim2.new(0, 12, 0, 12),
+                Position = UDim2.new(1, -20, 0.5, -6),
+                BackgroundColor3 = state and Library.Colors.ACCENT or Library.Colors.HIGHLIGHT
+            })
+            create("UICorner", {Parent = indicator, CornerRadius = UDim.new(1, 0)})
+
+            tFrame.MouseButton1Click:Connect(function()
+                state = not state
+                Library.Flags[flag] = state
+                Library:SaveConfig()
+                TweenService:Create(indicator, TweenInfo.new(0.2), {
+                    BackgroundColor3 = state and Library.Colors.ACCENT or Library.Colors.HIGHLIGHT
+                }):Play()
+                callback(state)
+            end)
+            if state then task.spawn(callback, true) end
+        end
+
+        function elements:CreateSlider(sText, min, max, flag, callback)
+            local val = Library.Flags[flag] or min
+            local sFrame = create("Frame", {
+                Parent = page, Size = UDim2.new(1, 0, 0, 50),
+                BackgroundColor3 = Library.Colors.DARK_GREY
+            })
+            create("UICorner", {Parent = sFrame, CornerRadius = UDim.new(0, 5)})
+
+            local label = create("TextLabel", {
+                Parent = sFrame, Text = "  " .. sText, Size = UDim2.new(1, 0, 0, 25),
+                BackgroundTransparency = 1, TextColor3 = Library.Colors.TEXT, 
+                Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = "Left"
+            })
+            local vLabel = create("TextLabel", {
+                Parent = sFrame, Text = tostring(val), Size = UDim2.new(1, -10, 0, 25),
+                BackgroundTransparency = 1, TextColor3 = Library.Colors.ACCENT, 
+                Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = "Right"
+            })
+
+            local bar = create("Frame", {
+                Parent = sFrame, Size = UDim2.new(0.9, 0, 0, 4), Position = UDim2.new(0.05, 0, 0.7, 0),
+                BackgroundColor3 = Library.Colors.HIGHLIGHT
+            })
+            local fill = create("Frame", {
+                Parent = bar, Size = UDim2.new((val-min)/(max-min), 0, 1, 0),
+                BackgroundColor3 = Library.Colors.ACCENT
+            })
+
+            local dragging = false
+            local function update()
+                local percent = math.clamp((UserInputService:GetMouseLocation().X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+                local current = math.floor(min + (max - min) * percent)
+                fill.Size = UDim2.new(percent, 0, 1, 0)
+                vLabel.Text = tostring(current)
+                Library.Flags[flag] = current
+                callback(current)
+            end
+
+            bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
+            UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false Library:SaveConfig() end end)
+            UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then update() end end)
+            
+            task.spawn(callback, val)
+        end
+
+        function elements:CreateDropdown(dText, list, multi, flag, callback)
+            local selected = Library.Flags[flag] or (multi and {} or "")
+            local open = false
+            
+            local dFrame = create("Frame", {
+                Parent = page, Size = UDim2.new(1, 0, 0, 35),
+                BackgroundColor3 = Library.Colors.DARK_GREY, ClipsDescendants = true
+            })
+            create("UICorner", {Parent = dFrame, CornerRadius = UDim.new(0, 5)})
+
+            local dBtn = create("TextButton", {
+                Parent = dFrame, Size = UDim2.new(1, 0, 0, 35),
+                BackgroundTransparency = 1, Text = "  " .. dText,
+                TextColor3 = Library.Colors.TEXT, Font = Enum.Font.Gotham, TextSize = 12,
+                TextXAlignment = "Left"
+            })
+
+            dBtn.MouseButton1Click:Connect(function()
+                open = not open
+                TweenService:Create(dFrame, TweenInfo.new(0.3), {
+                    Size = open and UDim2.new(1, 0, 0, 35 + (#list * 28)) or UDim2.new(1, 0, 0, 35)
+                }):Play()
+            end)
+
+            for i, val in pairs(list) do
+                local item = create("TextButton", {
+                    Parent = dFrame, Size = UDim2.new(1, 0, 0, 28),
+                    Position = UDim2.new(0, 0, 0, 35 + (i-1)*28),
+                    BackgroundColor3 = Library.Colors.SECONDARY, Text = val,
+                    TextColor3 = Library.Colors.TEXT_MUTED, Font = Enum.Font.Gotham, TextSize = 11
+                })
+                
+                item.MouseButton1Click:Connect(function()
+                    if multi then
+                        if table.find(selected, val) then
+                            table.remove(selected, table.find(selected, val))
+                            item.TextColor3 = Library.Colors.TEXT_MUTED
+                        else
+                            table.insert(selected, val)
+                            item.TextColor3 = Library.Colors.ACCENT
+                        end
+                    else
+                        selected = val
+                        open = false
+                        TweenService:Create(dFrame, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 35)}):Play()
+                    end
+                    Library.Flags[flag] = selected
+                    Library:SaveConfig()
+                    callback(selected)
+                end)
+            end
+        end
+
+        return elements
+    end
+    
+    return tabSystem
+end
+
+-- [ EXEMPLO DE USO COMPLETO ] --
+local Window = Library:Init({Name = "FLUXION ENGINE"})
+
+local Tab1 = Window:CreateTab("Combate")
+local Tab2 = Window:CreateTab("Config")
+
+Tab1:CreateToggle("Aimbot", "aim_toggle", function(s)
+    print("Aimbot:", s)
+end)
+
+Tab1:CreateSlider("Alcance", 1, 500, "aim_range", function(v)
+    print("Alcance:", v)
+end)
+
+Tab2:CreateDropdown("Servidores", {"Brasil", "EUA", "Europa"}, false, "srv", function(v)
+    Library:Notify("Sucesso", "Servidor alterado para: " .. v, "SUCCESS")
+end)
+
+Tab2:CreateButton("Limpar Logs", function()
+    Library:Notify("Info", "Todos os logs foram limpos.", "WARNING")
+end)
+
+return Library
